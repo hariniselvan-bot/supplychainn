@@ -1,9 +1,11 @@
 /* =========================================================
    STACKLY — navigation.js
-   Header behavior
+
+   Header
    Mobile menu
    Services dropdown
    Active navigation
+   404 previous page + exact scroll position
    Page veil transitions
 ========================================================= */
 
@@ -13,14 +15,14 @@
 
 
     /* =========================================================
-       HEADER SCROLL
+       HEADER
     ========================================================= */
 
     var header =
         document.querySelector('.sl-header');
 
 
-    var onScroll = function () {
+    function onScroll() {
 
         if (!header) return;
 
@@ -29,7 +31,7 @@
             window.scrollY > 40
         );
 
-    };
+    }
 
 
     window.addEventListener(
@@ -42,24 +44,232 @@
     onScroll();
 
 
+    /* =========================================================
+       SAVE CURRENT LOCATION
+    ========================================================= */
+
+    function saveReturnLocation() {
+
+        var page =
+            window.location.pathname;
+
+
+        var hash =
+            window.location.hash || "";
+
+
+        var scrollPosition =
+            Math.round(window.scrollY);
+
+
+        sessionStorage.setItem(
+            "stacklyReturnPage",
+            page
+        );
+
+
+        sessionStorage.setItem(
+            "stacklyReturnHash",
+            hash
+        );
+
+
+        sessionStorage.setItem(
+            "stacklyReturnScroll",
+            String(scrollPosition)
+        );
+
+    }
+
+
+    /*
+     * Save the position continuously.
+     *
+     * This is what allows 404 Go Back
+     * to return to the exact section even
+     * when there is NO #section in the URL.
+     */
+
+    var scrollSaveTimer = null;
+
+
+    window.addEventListener(
+        "scroll",
+        function () {
+
+            clearTimeout(
+                scrollSaveTimer
+            );
+
+
+            scrollSaveTimer =
+                setTimeout(
+                    function () {
+
+                        saveReturnLocation();
+
+                    },
+                    100
+                );
+
+        },
+        { passive: true }
+    );
+
+
+    /*
+     * Save immediately.
+     */
+
+    saveReturnLocation();
+
+
+    /*
+     * Save hash changes.
+     */
+
+    window.addEventListener(
+        "hashchange",
+        function () {
+
+            saveReturnLocation();
+
+        }
+    );
+
+
+    /*
+     * Save before leaving page.
+     */
+
+    window.addEventListener(
+        "beforeunload",
+        function () {
+
+            saveReturnLocation();
+
+        }
+    );
+
+
+    /* =========================================================
+       RESTORE PREVIOUS SCROLL POSITION
+    ========================================================= */
+
+    function restoreScrollPosition() {
+
+        var savedScroll =
+            sessionStorage.getItem(
+                "stacklyRestoreScroll"
+            );
+
+
+        if (
+            savedScroll === null
+        ) {
+
+            return;
+
+        }
+
+
+        sessionStorage.removeItem(
+            "stacklyRestoreScroll"
+        );
+
+
+        var scrollY =
+            parseInt(
+                savedScroll,
+                10
+            );
+
+
+        if (
+            isNaN(scrollY)
+        ) {
+
+            return;
+
+        }
+
+
+        /*
+         * Wait until page content is rendered.
+         */
+
+        window.setTimeout(
+            function () {
+
+                window.scrollTo(
+                    {
+                        top: scrollY,
+                        left: 0,
+                        behavior: "instant"
+                    }
+                );
+
+            },
+            100
+        );
+
+
+        /*
+         * Second attempt for pages
+         * with images / animations.
+         */
+
+        window.setTimeout(
+            function () {
+
+                window.scrollTo(
+                    {
+                        top: scrollY,
+                        left: 0,
+                        behavior: "instant"
+                    }
+                );
+
+            },
+            500
+        );
+
+    }
+
+
+    /*
+     * Only restore when coming back
+     * from the 404 page.
+     */
+
+    restoreScrollPosition();
+
 
     /* =========================================================
        MOBILE MENU
     ========================================================= */
 
     var burger =
-        document.querySelector('.sl-burger');
+        document.querySelector(
+            '.sl-burger'
+        );
+
 
     var menu =
-        document.querySelector('#sl-mobile-menu');
+        document.querySelector(
+            '#sl-mobile-menu'
+        );
 
 
-    if (burger && menu) {
+    if (
+        burger &&
+        menu
+    ) {
 
         var menuOpen = false;
 
 
-        var setMenu = function (open) {
+        function setMenu(open) {
 
             menuOpen = open;
 
@@ -78,7 +288,9 @@
 
             burger.setAttribute(
                 'aria-expanded',
-                open ? 'true' : 'false'
+                open
+                    ? 'true'
+                    : 'false'
             );
 
 
@@ -90,7 +302,9 @@
 
             menu.setAttribute(
                 'aria-hidden',
-                open ? 'false' : 'true'
+                open
+                    ? 'false'
+                    : 'true'
             );
 
 
@@ -101,14 +315,21 @@
 
 
             document.body.style.overflow =
-                open ? 'hidden' : '';
+                open
+                    ? 'hidden'
+                    : '';
 
 
             menu.style.visibility =
-                open ? 'visible' : 'hidden';
+                open
+                    ? 'visible'
+                    : 'hidden';
 
 
-            if (open && window.gsap) {
+            if (
+                open &&
+                window.gsap
+            ) {
 
                 gsap.fromTo(
                     menu,
@@ -144,29 +365,37 @@
 
             }
 
-        };
+        }
 
 
         burger.addEventListener(
             'click',
             function () {
 
-                setMenu(!menuOpen);
+                setMenu(
+                    !menuOpen
+                );
 
             }
         );
 
 
-        menu.querySelectorAll('a').forEach(
+        menu.querySelectorAll(
+            'a'
+        ).forEach(
             function (a) {
 
                 a.addEventListener(
                     'click',
                     function () {
 
-                        if (menuOpen) {
+                        if (
+                            menuOpen
+                        ) {
 
-                            setMenu(false);
+                            setMenu(
+                                false
+                            );
 
                         }
 
@@ -186,7 +415,9 @@
                     menuOpen
                 ) {
 
-                    setMenu(false);
+                    setMenu(
+                        false
+                    );
 
                 }
 
@@ -199,7 +430,9 @@
 
                 if (menuOpen) {
 
-                    setMenu(false);
+                    setMenu(
+                        false
+                    );
 
                 }
 
@@ -208,116 +441,140 @@
     }
 
 
-
     /* =========================================================
        SERVICES DROPDOWN
     ========================================================= */
 
     document
-        .querySelectorAll('.sl-has-dropdown')
-        .forEach(function (item) {
+        .querySelectorAll(
+            '.sl-has-dropdown'
+        )
+        .forEach(
+            function (item) {
 
-            var link =
-                item.querySelector('.sl-nav-link');
-
-            var dd =
-                item.querySelector('.sl-dropdown');
-
-
-            if (!link || !dd) return;
-
-
-            link.setAttribute(
-                'aria-haspopup',
-                'true'
-            );
+                var link =
+                    item.querySelector(
+                        '.sl-nav-link'
+                    );
 
 
-            link.setAttribute(
-                'aria-expanded',
-                'false'
-            );
+                var dropdown =
+                    item.querySelector(
+                        '.sl-dropdown'
+                    );
 
 
-            var open = function (v) {
+                if (
+                    !link ||
+                    !dropdown
+                ) {
 
-                item.classList.toggle(
-                    'open',
-                    v
+                    return;
+
+                }
+
+
+                link.setAttribute(
+                    'aria-haspopup',
+                    'true'
                 );
 
 
                 link.setAttribute(
                     'aria-expanded',
-                    v ? 'true' : 'false'
+                    'false'
                 );
 
-            };
+
+                function openDropdown(
+                    value
+                ) {
+
+                    item.classList.toggle(
+                        'open',
+                        value
+                    );
 
 
-            link.addEventListener(
-                'click',
-                function (e) {
-
-                    /*
-                     * On desktop, allow the dropdown.
-                     * On mobile, the normal navigation can
-                     * be handled by the mobile menu.
-                     */
-
-                    e.preventDefault();
-
-                    open(
-                        !item.classList.contains('open')
+                    link.setAttribute(
+                        'aria-expanded',
+                        value
+                            ? 'true'
+                            : 'false'
                     );
 
                 }
-            );
 
 
-            item.addEventListener(
-                'mouseenter',
-                function () {
+                link.addEventListener(
+                    'click',
+                    function (e) {
 
-                    if (
-                        window.matchMedia(
-                            '(hover:hover)'
-                        ).matches
-                    ) {
+                        e.preventDefault();
 
-                        open(true);
-
-                    }
-
-                }
-            );
-
-
-            item.addEventListener(
-                'mouseleave',
-                function () {
-
-                    open(false);
-
-                }
-            );
-
-
-            document.addEventListener(
-                'click',
-                function (e) {
-
-                    if (!item.contains(e.target)) {
-
-                        open(false);
+                        openDropdown(
+                            !item.classList.contains(
+                                'open'
+                            )
+                        );
 
                     }
+                );
 
-                }
-            );
 
-        });
+                item.addEventListener(
+                    'mouseenter',
+                    function () {
 
+                        if (
+                            window.matchMedia(
+                                '(hover:hover)'
+                            ).matches
+                        ) {
+
+                            openDropdown(
+                                true
+                            );
+
+                        }
+
+                    }
+                );
+
+
+                item.addEventListener(
+                    'mouseleave',
+                    function () {
+
+                        openDropdown(
+                            false
+                        );
+
+                    }
+                );
+
+
+                document.addEventListener(
+                    'click',
+                    function (e) {
+
+                        if (
+                            !item.contains(
+                                e.target
+                            )
+                        ) {
+
+                            openDropdown(
+                                false
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+        );
 
 
     /* =========================================================
@@ -327,131 +584,78 @@
     var currentPath =
         window.location.pathname
             .split('/')
-            .pop() || 'index.html';
+            .pop() ||
+        'index.html';
 
-
-    /*
-     * Remove existing active classes first.
-     */
 
     document
         .querySelectorAll(
             '.sl-nav-links a[href], .sl-mobile-menu a[href]'
         )
-        .forEach(function (a) {
+        .forEach(
+            function (a) {
 
-            a.classList.remove(
-                'is-active'
-            );
-
-        });
-
-
-    /*
-     * Desktop navigation
-     */
-
-    document
-        .querySelectorAll(
-            '.sl-nav-links a[href]'
-        )
-        .forEach(function (a) {
-
-            var href =
-                a.getAttribute('href');
-
-
-            if (!href) return;
-
-
-            /*
-             * Remove #section from links
-             */
-
-            var cleanHref =
-                href.split('#')[0];
-
-
-            /*
-             * Remove ./ if present
-             */
-
-            cleanHref =
-                cleanHref.replace(
-                    './',
-                    ''
-                );
-
-
-            if (
-                cleanHref === currentPath ||
-                (
-                    currentPath === '' &&
-                    cleanHref === 'index.html'
-                )
-            ) {
-
-                a.classList.add(
+                a.classList.remove(
                     'is-active'
                 );
 
             }
+        );
 
-        });
-
-
-    /*
-     * Mobile navigation
-     */
 
     document
         .querySelectorAll(
-            '.sl-mobile-menu a[href]'
+            '.sl-nav-links a[href], .sl-mobile-menu a[href]'
         )
-        .forEach(function (a) {
+        .forEach(
+            function (a) {
 
-            var href =
-                a.getAttribute('href');
-
-
-            if (!href) return;
-
-
-            var cleanHref =
-                href.split('#')[0];
+                var href =
+                    a.getAttribute(
+                        'href'
+                    );
 
 
-            cleanHref =
-                cleanHref.replace(
-                    './',
-                    ''
-                );
+                if (!href) return;
 
 
-            if (
-                cleanHref === currentPath ||
-                (
-                    currentPath === '' &&
-                    cleanHref === 'index.html'
-                )
-            ) {
+                var cleanHref =
+                    href.split('#')[0];
 
-                a.classList.add(
-                    'is-active'
-                );
+
+                cleanHref =
+                    cleanHref.replace(
+                        './',
+                        ''
+                    );
+
+
+                if (
+                    cleanHref === currentPath ||
+                    (
+                        currentPath === '' &&
+                        cleanHref === 'index.html'
+                    )
+                ) {
+
+                    a.classList.add(
+                        'is-active'
+                    );
+
+                }
 
             }
-
-        });
-
+        );
 
 
     /* =========================================================
-       PAGE VEIL TRANSITIONS
+       PAGE VEIL
     ========================================================= */
 
     var veil =
-        document.querySelector('.sl-veil');
+        document.querySelector(
+            '.sl-veil'
+        );
 
 
     if (
@@ -460,12 +664,9 @@
     ) {
 
 
-        /* =====================================================
-           INITIAL STATE
-           VERY IMPORTANT
-        ===================================================== */
-
-        gsap.killTweensOf(veil);
+        gsap.killTweensOf(
+            veil
+        );
 
 
         gsap.set(
@@ -477,19 +678,9 @@
         );
 
 
-        /*
-         * Make sure veil cannot block clicks
-         * when page is visible.
-         */
-
         veil.style.pointerEvents =
             'none';
 
-
-
-        /* =====================================================
-           REVEAL CURRENT PAGE
-        ===================================================== */
 
         function revealPage() {
 
@@ -512,58 +703,119 @@
                 {
                     scaleY: 0,
                     duration: .6,
+                    delay: .05,
                     ease: 'power3.inOut',
-                    delay: .1,
-                    onComplete: function () {
 
-                        veil.style.pointerEvents =
-                            'none';
+                    onComplete:
+                        function () {
 
-                    }
+                            veil.style.pointerEvents =
+                                'none';
+
+                        }
+
                 }
             );
 
         }
 
 
-
         /* =====================================================
-           PAGE LINK CLICK
+           NAVIGATION
         ===================================================== */
 
         document.addEventListener(
             'click',
-            function (e) {
+            function (event) {
 
-
-                var a =
-                    e.target.closest(
-                        'a[href$=".html"], a[href^="./"][href$=".html"]'
+                var link =
+                    event.target.closest(
+                        'a[href]'
                     );
 
 
-                if (!a) return;
+                if (!link) return;
 
 
                 var href =
-                    a.getAttribute('href');
+                    link.getAttribute(
+                        'href'
+                    );
 
 
                 if (!href) return;
 
 
+                if (
+                    href.charAt(0) === '#' ||
+                    href.indexOf(
+                        'javascript:'
+                    ) === 0 ||
+                    href.indexOf(
+                        'mailto:'
+                    ) === 0 ||
+                    href.indexOf(
+                        'tel:'
+                    ) === 0 ||
+                    link.target === '_blank' ||
+                    link.hasAttribute(
+                        'download'
+                    ) ||
+                    event.ctrlKey ||
+                    event.metaKey ||
+                    event.shiftKey ||
+                    event.altKey
+                ) {
+
+                    return;
+
+                }
+
+
+                var targetURL;
+
+
+                try {
+
+                    targetURL =
+                        new URL(
+                            href,
+                            window.location.href
+                        );
+
+                } catch (
+                    error
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    targetURL.origin !==
+                    window.location.origin
+                ) {
+
+                    return;
+
+                }
+
+
+                var currentURL =
+                    new URL(
+                        window.location.href
+                    );
+
+
                 /*
-                 * Ignore special links
+                 * Same-page section.
                  */
 
                 if (
-                    href.charAt(0) === '#' ||
-                    href.indexOf('javascript:') === 0 ||
-                    a.target === '_blank' ||
-                    e.metaKey ||
-                    e.ctrlKey ||
-                    e.shiftKey ||
-                    e.altKey
+                    targetURL.pathname ===
+                        currentURL.pathname &&
+                    targetURL.hash
                 ) {
 
                     return;
@@ -572,69 +824,30 @@
 
 
                 /*
-                 * Ignore same-page hash links
+                 * Only intercept HTML pages.
                  */
 
                 if (
-                    href.indexOf('#') !== -1
+                    !targetURL.pathname
+                        .toLowerCase()
+                        .endsWith(
+                            '.html'
+                        )
                 ) {
 
-                    var linkPage =
-                        href.split('#')[0];
-
-
-                    var thisPage =
-                        window.location.pathname
-                            .split('/')
-                            .pop();
-
-
-                    if (
-                        linkPage === thisPage ||
-                        linkPage === ''
-                    ) {
-
-                        return;
-
-                    }
+                    return;
 
                 }
 
 
                 /*
-                 * Save current page + section
-                 * for 404 Go Back.
+                 * VERY IMPORTANT:
+                 *
+                 * Save scroll position BEFORE
+                 * navigating away.
                  */
 
-                var currentSection =
-                    window.location.hash
-                        .replace('#', '');
-
-
-                sessionStorage.setItem(
-                    'stacklyPreviousPage',
-                    currentPath
-                );
-
-
-                if (currentSection) {
-
-                    sessionStorage.setItem(
-                        'stacklyPreviousSection',
-                        currentSection
-                    );
-
-                } else {
-
-                    sessionStorage.removeItem(
-                        'stacklyPreviousSection'
-                    );
-
-                }
-
-
-
-                e.preventDefault();
+                saveReturnLocation();
 
 
                 if (
@@ -646,14 +859,13 @@
                 }
 
 
+                event.preventDefault();
+
+
                 gsap.killTweensOf(
                     veil
                 );
 
-
-                /*
-                 * START WITH VEIL HIDDEN
-                 */
 
                 gsap.set(
                     veil,
@@ -664,9 +876,9 @@
                 );
 
 
-                /*
-                 * Cover current page
-                 */
+                veil.style.pointerEvents =
+                    'auto';
+
 
                 gsap.to(
                     veil,
@@ -675,12 +887,13 @@
                         duration: .45,
                         ease: 'power3.inOut',
 
-                        onComplete: function () {
+                        onComplete:
+                            function () {
 
-                            window.location.href =
-                                href;
+                                window.location.href =
+                                    targetURL.href;
 
-                        }
+                            }
 
                     }
                 );
@@ -688,11 +901,6 @@
             }
         );
 
-
-
-        /* =====================================================
-           BROWSER BACK / FORWARD
-        ===================================================== */
 
         window.addEventListener(
             'pageshow',
@@ -704,13 +912,22 @@
         );
 
 
-        /*
-         * Also reveal immediately.
-         * This is important for GitHub Pages.
-         */
-
         revealPage();
 
+
+    } else {
+
+        if (veil) {
+
+            veil.style.transform =
+                'scaleY(0)';
+
+            veil.style.pointerEvents =
+                'none';
+
+        }
+
     }
+
 
 })();
