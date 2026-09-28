@@ -68,21 +68,155 @@
     if (href === path || (path === '' && href === 'index.html')) a.classList.add('is-active');
   });
 
-  /* ---------- Page veil transitions ---------- */
-  var veil = document.querySelector('.sl-veil');
+Harini, in navigation.js file 
+replace this code to: 
+
+var veil = document.querySelector('.sl-veil');
+
   if (veil && window.gsap) {
+
     document.addEventListener('click', function (e) {
+
       var a = e.target.closest('a[href$=".html"], a[href="index.html"]');
+
       if (!a) return;
+
       var href = a.getAttribute('href');
+
       if (!href || href.charAt(0) === '#' || a.target === '_blank' || e.metaKey || e.ctrlKey) return;
+
       e.preventDefault();
+
       if (window.__slCloseMenu) window.__slCloseMenu();
+
       gsap.timeline()
+
         .set(veil, { transformOrigin: 'bottom' })
+
         .to(veil, { scaleY: 1, duration: .45, ease: 'power3.inOut' })
+
         .add(function () { window.location.href = href; });
+
     });
+
     gsap.fromTo(veil, { scaleY: 1, transformOrigin: 'top' }, { scaleY: 0, duration: .6, ease: 'power3.inOut', delay: .1 });
+
   }
+
+to this:
+
+/* ---------- Page veil transitions ---------- */
+
+var veil = document.querySelector('.sl-veil');
+ 
+if (veil && window.gsap) {
+ 
+  function revealPage() {
+
+    gsap.killTweensOf(veil);
+ 
+    gsap.set(veil, {
+
+      scaleY: 1,
+
+      transformOrigin: 'top'
+
+    });
+ 
+    gsap.to(veil, {
+
+      scaleY: 0,
+
+      duration: .6,
+
+      ease: 'power3.inOut',
+
+      delay: .1
+
+    });
+
+  }
+ 
+  document.addEventListener('click', function (e) {
+ 
+    var a = e.target.closest(
+
+      'a[href$=".html"], a[href="index.html"]'
+
+    );
+ 
+    if (!a) return;
+ 
+    var href = a.getAttribute('href');
+ 
+    if (
+
+      !href ||
+
+      href.charAt(0) === '#' ||
+
+      a.target === '_blank' ||
+
+      e.metaKey ||
+
+      e.ctrlKey
+
+    ) {
+
+      return;
+
+    }
+ 
+    e.preventDefault();
+ 
+    if (window.__slCloseMenu) {
+
+      window.__slCloseMenu();
+
+    }
+ 
+    gsap.killTweensOf(veil);
+ 
+    gsap.timeline()
+
+      .set(veil, {
+
+        scaleY: 0,
+
+        transformOrigin: 'bottom'
+
+      })
+
+      .to(veil, {
+
+        scaleY: 1,
+
+        duration: .45,
+
+        ease: 'power3.inOut'
+
+      })
+
+      .add(function () {
+
+        window.location.href = href;
+
+      });
+
+  });
+ 
+  // Initial page load
+
+  revealPage();
+ 
+  // Browser Back / Forward
+
+  window.addEventListener('pageshow', function () {
+
+    revealPage();
+
+  });
+
+}
+ 
 })();
